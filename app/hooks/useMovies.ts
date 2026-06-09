@@ -42,17 +42,9 @@ export function useMovies() {
       const viewedIds: string[] = loadFromStorage(VIEWED_KEY, []);
       const added: Movie[] = loadFromStorage(ADDED_KEY, []);
 
-      // Migrate: move removed movies to viewed instead
+      // Clean up old removed list (no longer used)
       if (removedIds.length > 0) {
-        const merged = Array.from(new Set([...viewedIds, ...removedIds]));
-        localStorage.setItem(VIEWED_KEY, JSON.stringify(merged));
         localStorage.removeItem(REMOVED_KEY);
-        const all = [...data, ...added].map(m => ({
-          ...m,
-          viewed: merged.includes(m.id) ? true : m.viewed,
-        }));
-        setMovies(all);
-        return;
       }
 
       const all = [...data, ...added].map(m => ({
