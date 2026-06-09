@@ -139,7 +139,7 @@ export function RandomPicker({ movies, isOpen, onClose, onSelect, onConfirm }: R
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-500 transition-colors"
               >
                 <Check className="w-5 h-5" />
-                Confirmer & Supprimer
+                J'ai vu ce film !
               </button>
             </>
           ) : isSpinning ? (

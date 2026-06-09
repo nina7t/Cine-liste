@@ -6,6 +6,7 @@ import { fetchMoviesFromSheet, getGenres, getPlatforms, getYears } from '../lib/
 
 const ADDED_KEY = 'cinema-liste-added';
 const REMOVED_KEY = 'cinema-liste-removed';
+const VIEWED_KEY = 'cinema-liste-viewed';
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -38,9 +39,27 @@ export function useMovies() {
       setError(null);
       const data = await fetchMoviesFromSheet();
       const removedIds: string[] = loadFromStorage(REMOVED_KEY, []);
+      const viewedIds: string[] = loadFromStorage(VIEWED_KEY, []);
       const added: Movie[] = loadFromStorage(ADDED_KEY, []);
-      const filtered = data.filter(m => !removedIds.includes(m.id));
-      setMovies([...filtered, ...added]);
+
+      // Migrate: move removed movies to viewed instead
+      if (removedIds.length > 0) {
+        const merged = Array.from(new Set([...viewedIds, ...removedIds]));
+        localStorage.setItem(VIEWED_KEY, JSON.stringify(merged));
+        localStorage.removeItem(REMOVED_KEY);
+        const all = [...data, ...added].map(m => ({
+          ...m,
+          viewed: merged.includes(m.id) ? true : m.viewed,
+        }));
+        setMovies(all);
+        return;
+      }
+
+      const all = [...data, ...added].map(m => ({
+        ...m,
+        viewed: viewedIds.includes(m.id) ? true : m.viewed,
+      }));
+      setMovies(all);
     } catch (err) {
       setError('Erreur lors du chargement des films');
     } finally {
@@ -56,6 +75,15 @@ export function useMovies() {
     setMovies(prev => [...prev, newMovie]);
   };
 
+  const markAsViewed = (movieId: string) => {
+    const viewedIds: string[] = loadFromStorage(VIEWED_KEY, []);
+    if (!viewedIds.includes(movieId)) {
+      viewedIds.push(movieId);
+      localStorage.setItem(VIEWED_KEY, JSON.stringify(viewedIds));
+    }
+    setMovies(prev => prev.map(m => m.id === movieId ? { ...m, viewed: true } : m));
+  };
+
   const removeMovie = (movieId: string) => {
     if (movieId.startsWith('custom-')) {
       const added: Movie[] = loadFromStorage(ADDED_KEY, []);
@@ -68,9 +96,14 @@ export function useMovies() {
     setMovies(prev => prev.filter(m => m.id !== movieId));
   };
 
+  // Viewed movies
+  const viewedMovies = useMemo(() => {
+    return movies.filter(m => !m.isCategory && m.viewed);
+  }, [movies]);
+
   // Filter and sort movies
   const filteredMovies = useMemo(() => {
-    let result = movies.filter(m => !m.isCategory);
+    let result = movies.filter(m => !m.isCategory && !m.viewed);
 
     // Search filter
     if (searchQuery) {
@@ -98,11 +131,6 @@ export function useMovies() {
       result = result.filter(m => m.year === selectedYear);
     }
 
-    // Viewed filter
-    if (showOnlyUnviewed) {
-      result = result.filter(m => !m.viewed);
-    }
-
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
@@ -122,7 +150,7 @@ export function useMovies() {
     });
 
     return result;
-  }, [movies, searchQuery, selectedGenre, selectedPlatform, selectedYear, sortBy, showOnlyUnviewed]);
+  }, [movies, searchQuery, selectedGenre, selectedPlatform, selectedYear, sortBy]);
 
   // Get random movie
   const getRandomMovie = useCallback(() => {
@@ -183,5 +211,7 @@ export function useMovies() {
     getRandomMovie,
     addMovie,
     removeMovie,
+    markAsViewed,
+    viewedMovies,
   };
 }

@@ -11,7 +11,7 @@ import { MovieDetail } from './components/MovieDetail';
 import { RandomPicker } from './components/RandomPicker';
 import { AddMovieModal } from './components/AddMovieModal';
 import { EmptyState } from './components/EmptyState';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye } from 'lucide-react';
 
 export default function Home() {
   const {
@@ -21,6 +21,8 @@ export default function Home() {
     refresh,
     addMovie,
     removeMovie,
+    markAsViewed,
+    viewedMovies,
     searchQuery,
     setSearchQuery,
     selectedGenre,
@@ -279,6 +281,46 @@ export default function Home() {
             ))}
           </div>
         )}
+        {/* Viewed movies section */}
+        {!loading && !error && viewedMovies.length > 0 && (
+          <section className="mt-16">
+            <div className="relative mb-5 py-3 px-5 rounded-xl bg-gradient-to-r from-gray-500/20 via-dark-800 to-dark-800 border-l-4 border-gray-500">
+              <div className="flex items-center gap-2">
+                <Eye className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg sm:text-xl font-bold text-gray-300 tracking-wide">
+                  Déjà vus
+                </h2>
+              </div>
+              <span className="text-xs text-gray-500 mt-0.5">
+                {viewedMovies.length} film{viewedMovies.length > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 opacity-60">
+                {viewedMovies.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    onClick={() => handleMovieClick(movie)}
+                    variant="grid"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3 opacity-60">
+                {viewedMovies.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    onClick={() => handleMovieClick(movie)}
+                    variant="horizontal"
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       {/* Modals */}
@@ -293,7 +335,7 @@ export default function Home() {
         isOpen={isRandomPickerOpen}
         onClose={() => setIsRandomPickerOpen(false)}
         onSelect={handleSelectFromPicker}
-        onConfirm={(movie) => removeMovie(movie.id)}
+        onConfirm={(movie) => markAsViewed(movie.id)}
       />
 
       <AddMovieModal
