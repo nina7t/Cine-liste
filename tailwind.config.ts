@@ -17,8 +17,8 @@ const config: Config = {
           500: '#404040',
         },
         accent: {
-          primary: '#003bff',
-          secondary: '#0050ff',
+          primary: '#00af7f',
+          secondary: '#00c98f',
         },
         rating: {
           gold: '#ffd700',

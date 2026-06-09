@@ -83,7 +83,7 @@ export function RandomPicker({ movies, isOpen, onClose, onSelect, onConfirm }: R
             <div 
               className="relative mx-auto w-48 sm:w-56 aspect-[2/3] rounded-2xl overflow-hidden bg-dark-700 shadow-2xl"
               style={{
-                boxShadow: hasResult ? '0 25px 50px -12px rgba(0, 59, 255, 0.4)' : undefined
+                boxShadow: hasResult ? '0 25px 50px -12px rgba(0, 175, 127, 0.4)' : undefined
               }}
             >
               <img
