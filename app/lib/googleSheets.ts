@@ -7,7 +7,7 @@ const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 export async function fetchMoviesFromSheet(): Promise<Movie[]> {
   // Utiliser les données du fichier Excel importé
   if (localMovies && localMovies.length > 0) {
-    return localMovies as Movie[];
+    return localMovies as unknown as Movie[];
   }
 
   // Fallback sur Google Sheets si configuré
