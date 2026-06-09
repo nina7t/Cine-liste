@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMovies } from './hooks/useMovies';
 import { Movie, SortOption } from './types/movie';
 import { Header } from './components/Header';
@@ -46,6 +46,41 @@ export default function Home() {
   const [isAddMovieOpen, setIsAddMovieOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Group movies by genre for sectioned display
+  const genreOrder = ['Action', 'Comédie', 'Animation', 'Fantastique', 'Sci-Fi', 'Guerre/Historique', 'Drame', 'Romance', 'Western', 'Thriller', 'Documentaire'];
+  const showSections = !searchQuery && !selectedGenre && !selectedPlatform && !selectedYear && sortBy === 'dateAdded';
+
+  const moviesByGenre = useMemo(() => {
+    if (!showSections) return null;
+    const grouped: { genre: string; label: string; movies: Movie[] }[] = [];
+    const genreLabels: Record<string, string> = {
+      'Action': 'Action / Aventures',
+      'Comédie': 'Comédie',
+      'Animation': 'Animation',
+      'Fantastique': 'Fantastique',
+      'Sci-Fi': 'Science-Fiction',
+      'Guerre/Historique': 'Guerre / Historique',
+      'Drame': 'Drame',
+      'Romance': 'Romance',
+      'Western': 'Western',
+      'Thriller': 'Thriller / Policier',
+      'Documentaire': 'Documentaire',
+    };
+    for (const genre of genreOrder) {
+      const genreMovies = movies.filter(m => m.genre === genre);
+      if (genreMovies.length > 0) {
+        grouped.push({ genre, label: genreLabels[genre] || genre, movies: genreMovies });
+      }
+    }
+    // Movies with unknown genres
+    const knownGenres = new Set(genreOrder);
+    const other = movies.filter(m => m.genre && !knownGenres.has(m.genre));
+    if (other.length > 0) {
+      grouped.push({ genre: 'Autre', label: 'Autres', movies: other });
+    }
+    return grouped;
+  }, [movies, showSections]);
 
   const handleMovieClick = (movie: Movie) => {
     setSelectedMovie(movie);
@@ -174,8 +209,51 @@ export default function Home() {
           />
         )}
 
-        {/* Movie grid */}
-        {!loading && !error && movies.length > 0 && viewMode === 'grid' && (
+        {/* Movie grid / list with genre sections */}
+        {!loading && !error && movies.length > 0 && showSections && moviesByGenre && (
+          <div className="space-y-10">
+            {moviesByGenre.map(({ genre, label, movies: genreMovies }) => (
+              <section key={genre}>
+                {/* Genre banner */}
+                <div className="relative mb-5 py-3 px-5 rounded-xl bg-gradient-to-r from-accent-primary/20 via-dark-800 to-dark-800 border-l-4 border-accent-primary">
+                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
+                    {label}
+                  </h2>
+                  <span className="text-xs text-gray-400 mt-0.5">
+                    {genreMovies.length} film{genreMovies.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+                    {genreMovies.map((movie) => (
+                      <MovieCard
+                        key={movie.id}
+                        movie={movie}
+                        onClick={() => handleMovieClick(movie)}
+                        variant="grid"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {genreMovies.map((movie) => (
+                      <MovieCard
+                        key={movie.id}
+                        movie={movie}
+                        onClick={() => handleMovieClick(movie)}
+                        variant="horizontal"
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
+
+        {/* Flat grid (when filters/search/sort active) */}
+        {!loading && !error && movies.length > 0 && !showSections && viewMode === 'grid' && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
             {movies.map((movie) => (
               <MovieCard
@@ -188,8 +266,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Movie list */}
-        {!loading && !error && movies.length > 0 && viewMode === 'list' && (
+        {/* Flat list (when filters/search/sort active) */}
+        {!loading && !error && movies.length > 0 && !showSections && viewMode === 'list' && (
           <div className="space-y-3">
             {movies.map((movie) => (
               <MovieCard

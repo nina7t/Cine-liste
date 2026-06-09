@@ -70,7 +70,7 @@ export function useMovies() {
 
   // Filter and sort movies
   const filteredMovies = useMemo(() => {
-    let result = [...movies];
+    let result = movies.filter(m => !m.isCategory);
 
     // Search filter
     if (searchQuery) {

@@ -11,6 +11,7 @@ export interface Movie {
   platform?: string;
   viewed?: boolean;
   dateAdded?: string;
+  isCategory?: boolean;
 }
 
 export interface FilterOptions {
